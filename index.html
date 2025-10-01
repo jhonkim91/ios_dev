@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
+  <title>비즈니스 캘린더</title>
+  
+  <!-- PWA 메타 태그 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="BizCal">
+  <meta name="theme-color" content="#6366f1">
+  
+  <!-- iOS 아이콘 - 캘린더 디자인 -->
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><defs><linearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%236366f1'/><stop offset='100%25' style='stop-color:%238b5cf6'/></linearGradient></defs><rect width='180' height='180' fill='url(%23bg)' rx='40'/><rect x='40' y='50' width='100' height='90' rx='8' fill='white' opacity='0.95'/><rect x='40' y='50' width='100' height='25' rx='8' fill='%23ef4444'/><circle cx='60' cy='62' r='2' fill='white'/><circle cx='90' cy='62' r='2' fill='white'/><circle cx='120' cy='62' r='2' fill='white'/><text x='90' y='110' text-anchor='middle' font-family='Arial' font-size='32' font-weight='bold' fill='%236366f1'>31</text></svg>">
+  
+  <style>
+    :root {
+      /* 색상 팔레트 */
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --primary-light: #818cf8;
+      --secondary: #8b5cf6;
+      --accent: #ec4899;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #06b6d4;
+      
+      /* 그레이스케일 */
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --gray-600: #4b5563;
+      --gray-700: #374151;
+      --gray-800: #1f2937;
+      --gray-900: #111827;
+      
+      /* 그라디언트 */
+      --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      --gradient-blue: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      --gradient-green: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      --gradient-purple: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+      --gradient-orange: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%);
+      
+      /* 그림자 */
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+      --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+    }
+    
+    /* 다크모드 */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --gray-50: #1f2937;
+        --gray-100: #374151;
+        --gray-200: #4b5563;
+        --gray-300: #6b7280;
+        --gray-900: #f9fafb;
+        --gray-800: #e5e7eb;
+      }
+      body {
+        background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+      }
+    }
+    
+    * { 
+      margin: 0; 
+      padding: 0; 
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
+      min-height: 100vh;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      -webkit-font-smoothing: antialiased;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    
+    input, textarea, select {
+      user-select: text;
+      -webkit-user-select: text;
+      font-size: 16px; /* iOS 줌 방지 */
+    }
+    
+    /* 컨테이너 */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+    
+    /* 헤더 카드 */
+    .header-card {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow-lg);
+      animation: slideDown 0.5s ease;
+    }
+    
+    .header-title {
+      margin-bottom: 20px;
+    }
+    
+    .header-title h1 {
+      font-size: 28px;
+      font-weight: 800;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 4px;
+    }
+    
+    .header-subtitle {
+      color: var(--gray-600);
+      font-size: 14px;
+    }
+    
+    /* 액션 버튼 그룹 */
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    
+    /* 검색창 */
+    .search-container {
+      position: relative;
+      flex: 1;
+      min-width: 260px;
+    }
+    
+    .search-input {
+      width: 100%;
+      padding: 12px 20px 12px 44px;
+      border: 2px solid var(--gray-200);
+      border-radius: 16px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      background: white;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+    }
+    
+    .search-icon {
+      position: absolute;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+    }
+    
+    /* 버튼 스타일 */
+    .btn {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    
+    .btn:active {
+      transform: scale(0.95);
+    }
+    
+    .btn-primary {
+      background: var(--gradient-primary);
+      color: white;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+    }
+    
+    .btn-success {
+      background: var(--gradient-green);
+      color: white;
+    }
+    
+    .btn-secondary {
+      background: var(--gray-200);
+      color: var(--gray-800);
+    }
+    
+    .btn-icon {
+      padding: 12px;
+      width: 44px;
+      height: 44px;
+    }
+    
+    /* 통계 카드 그리드 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+    
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+    }
+    
+    .stat-card.blue::before { background: var(--gradient-blue); }
+    .stat-card.green::before { background: var(--gradient-green); }
+    .stat-card.purple::before { background: var(--gradient-purple); }
+    .stat-card.orange::before { background: var(--gradient-orange); }
+    
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-xl);
+    }
+    
+    .stat-card:active {
+      transform: translateY(-2px);
+    }
+    
+    .stat-content h3 {
+      font-size: 12px;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--gray-900);
+    }
+    
+    .stat-icon {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      opacity: 0.15;
+    }
+    
+    /* 메인 레이아웃 */
+    .main-content {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+    
+    /* 캘린더 섹션 */
+    .calendar-section {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    
+    .calendar-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+    
+    .calendar-nav {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      background: var(--gray-200);
+      border-radius: 12px;
+      padding: 2px;
+      overflow: hidden;
+    }
+    
+    .calendar-header-day {
+      background: var(--gray-100);
+      padding: 12px;
+      text-align: center;
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--gray-700);
+    }
+    
+    .calendar-day {
+      background: white;
+      padding: 10px;
+      min-height: 90px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border-radius: 8px;
+      position: relative;
+    }
+    
+    .calendar-day:hover {
+      background: var(--gray-50);
+      transform: scale(1.02);
+      z-index: 1;
+      box-shadow: var(--shadow-md);
+    }
+    
+    .calendar-day.today {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+      border: 2px solid var(--primary);
+    }
+    
+    .calendar-day.has-events::after {
+      content: '';
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+    
+    .day-number {
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--gray-800);
+      margin-bottom: 4px;
+    }
+    
+    /* 사이드바 */
+    .sidebar {
+      background: rgba(255, 255, 255, 0.98);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .sidebar-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+    }
+    
+    /* 업체 리스트 */
+    .business-list {
+      max-height: 500px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    
+    .business-item {
+      background: white;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border-left: 4px solid;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    .business-item:hover {
+      transform: translateX(4px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .business-name {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+    
+    .business-info {
+      font-size: 13px;
+      color: var(--gray-600);
+      display: flex;
+      gap: 12px;
+    }
+    
+    .business-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+    
+    /* 필터 섹션 */
+    .filters {
+      background: var(--gray-50);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    
+    .filter-group {
+      margin-bottom: 12px;
+    }
+    
+    .filter-label {
+      font-size: 12px;
+      color: var(--gray-600);
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: block;
+    }
+    
+    .filter-input, .filter-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 8px;
+      font-size: 14px;
+      background: white;
+      transition: all 0.3s ease;
+    }
+    
+    .filter-input:focus, .filter-select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    
+    /* 모달 */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      padding: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-content {
+      background: white;
+      border-radius: 24px;
+      max-width: 600px;
+      width: 100%;
+      max-height: 85vh;
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+      animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    
+    .modal-header {
+      background: var(--gradient-primary);
+      color: white;
+      padding: 24px;
+    }
+    
+    .modal-header h3 {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0;
+    }
+    
+    .modal-body {
+      padding: 24px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    
+    .modal-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    
+    /* 애니메이션 */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* 반응형 디자인 */
+    @media (max-width: 900px) {
+      .main-content {
+        grid-template-columns: 1fr;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      .search-container {
+        min-width: 100%;
+      }
+      
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 12px;
+      }
+      
+      .header-card {
+        padding: 16px;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .calendar-grid {
+        gap: 1px;
+      }
+      
+      .calendar-day {
+        min-height: 70px;
+        padding: 6px;
+      }
+      
+      .btn {
+        padding: 10px 16px;
+        font-size: 14px;
+      }
+    }
+    
+    /* iOS 스타일 토스트 메시지 */
+    .toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-size: 15px;
+      z-index: 9999;
+      animation: toastIn 0.3s ease;
+    }
+    
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+    
+    /* 로딩 스피너 */
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid var(--gray-200);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* PWA 설치 프롬프트 */
+    .install-prompt {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: var(--shadow-xl);
+      z-index: 9999;
+      max-width: 90%;
+      text-align: center;
+      animation: slideUp 0.3s ease;
+    }
+    
+    .install-prompt h3 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      color: var(--gray-900);
+    }
+    
+    .install-prompt p {
+      margin: 0 0 16px;
+      color: var(--gray-600);
+      font-size: 14px;
+    }
+    
+    /* 스크롤바 커스터마이징 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--gray-100);
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 10px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-dark);
+    }
+  </style>
+</head>
+<body>
+  <!-- PWA 설치 프롬프트 -->
+  <div id="installPrompt" class="install-prompt">
+    <h3>📱 앱으로 설치하기</h3>
+    <p>홈 화면에 추가하여 더 빠르고 편리하게 사용하세요!</p>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button class="btn btn-primary" onclick="installPWA()">설치하기</button>
+      <button class="btn btn-secondary" onclick="dismissInstall()">나중에</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- 헤더 카드 -->
+    <div class="header-card">
+      <div class="header-title">
+        <h1>비즈니스 캘린더</h1>
+        <div class="header-subtitle">업체 관리를 더 스마트하게</div>
+      </div>
+      
+      <!-- 액션 버튼 -->
+      <div class="action-buttons">
+        <div class="search-container">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input type="text" class="search-input" placeholder="업체명, 담당자, 전화번호 검색..." id="searchInput">
+        </div>
+        <button class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"></line>
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+          </svg>
+          신규 등록
+        </button>
+        <button class="btn btn-success">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+          </svg>
+          엑셀 불러오기
+        </button>
+      </div>
+      
+      <!-- 통계 카드 -->
+      <div class="stats-grid">
+        <div class="stat-card blue">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+          </svg>
+          <div class="stat-content">
+            <h3>전체 업체</h3>
+            <div class="stat-value">48</div>
+          </div>
+        </div>
+        
+        <div class="stat-card green">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/>
+          </svg>
+          <div class="stat-content">
+            <h3>오늘 일정</h3>
+            <div class="stat-value">7</div>
+          </div>
+        </div>
+        
+        <div class="stat-card purple">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>
+          </svg>
+          <div class="stat-content">
+            <h3>이번달 매출</h3>
+            <div class="stat-value">850만</div>
+          </div>
+        </div>
+        
+        <div class="stat-card orange">
+          <svg class="stat-icon" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+          </svg>
+          <div class="stat-content">
+            <h3>업체 유형</h3>
+            <div class="stat-value">12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 메인 콘텐츠 -->
+    <div class="main-content">
+      <!-- 캘린더 섹션 -->
+      <div class="calendar-section">
+        <div class="calendar-header">
+          <h2 class="calendar-title">2024년 12월</h2>
+          <div class="calendar-nav">
+            <button class="btn btn-secondary btn-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <button class="btn btn-secondary btn-icon">
+              <svg width="20" height="20" viewBox="0 0

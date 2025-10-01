@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>PWA 아이콘 생성기</title>
+</head>
+<body>
+  <h2>PWA 아이콘 생성기</h2>
+  <canvas id="canvas"></canvas>
+  <script>
+    const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+    
+    sizes.forEach(size => {
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      // 그라디언트 배경
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#6366f1');
+      gradient.addColorStop(1, '#8b5cf6');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+      
+      // 아이콘 텍스트
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${size/3}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('📅', size/2, size/2);
+      
+      // 이미지 다운로드 링크 생성
+      canvas.toBlob(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `icon-${size}.png`;
+        a.textContent = `Download ${size}x${size}`;
+        document.body.appendChild(a);
+        document.body.appendChild(document.createElement('br'));
+      });
+    });
+  </script>
+</body>
+</html>
